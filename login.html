@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - FormGPT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #1a1a1a;
+            --secondary-bg: #f8f9fa;
+            --accent-blue: #0066ff;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --error-red: #ef4444;
+            --neutral-gray: #6b7280;
+            --text-light: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #0066ff, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .login-container {
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 102, 255, 0.3);
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 480px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 102, 255, 0.1) 0%, rgba(0, 204, 255, 0.1) 100%);
+            z-index: -1;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(0, 102, 255, 0.3);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            width: 100%;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .login-btn {
+            background: linear-gradient(135deg, #0066ff, #0052cc);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            width: 100%;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 102, 255, 0.3);
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .social-login-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            width: 100%;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+        
+        .social-login-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .google-btn:hover {
+            border-color: #4285f4;
+            background: rgba(66, 133, 244, 0.1);
+        }
+        
+        .facebook-btn:hover {
+            border-color: #1877f2;
+            background: rgba(24, 119, 242, 0.1);
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 2rem 0;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .divider span {
+            padding: 0 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+        }
+        
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        .shape:nth-child(1) {
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .shape:nth-child(2) {
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+        
+        .shape:nth-child(3) {
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            color: #fca5a5;
+            font-size: 0.875rem;
+            display: none;
+        }
+        
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            color: #6ee7b7;
+            font-size: 0.875rem;
+            display: none;
+        }
+        
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Background Shapes -->
+    <div class="floating-shapes">
+        <div class="shape text-6xl">⚡</div>
+        <div class="shape text-4xl">🔧</div>
+        <div class="shape text-5xl">🚀</div>
+    </div>
+
+    <!-- Login Container -->
+    <div class="login-container">
+        <!-- Logo and Title -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center space-x-3 mb-4">
+                <img src="resources/formgpt-logo.png" alt="FormGPT" class="w-12 h-12">
+                <h1 class="text-3xl font-bold font-space-grotesk gradient-text">FormGPT</h1>
+            </div>
+            <p class="text-gray-400">Welcome back! Sign in to your account</p>
+        </div>
+
+        <!-- Error/Success Messages -->
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <!-- Social Login Buttons -->
+        <div class="space-y-3 mb-6">
+            <button id="google-login" class="social-login-btn google-btn">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </button>
+            
+            <button id="facebook-login" class="social-login-btn facebook-btn">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                Continue with Facebook
+            </button>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider">
+            <span>or sign in with email</span>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="space-y-4">
+            <div class="form-group">
+                <input 
+                    type="email" 
+                    id="email" 
+                    class="form-input" 
+                    placeholder="Email address" 
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <input 
+                    type="password" 
+                    id="password" 
+                    class="form-input" 
+                    placeholder="Password" 
+                    required
+                >
+            </div>
+            
+            <div class="flex items-center justify-between mb-6">
+                <label class="flex items-center">
+                    <input type="checkbox" class="mr-2 text-blue-600">
+                    <span class="text-sm text-gray-400">Remember me</span>
+                </label>
+                <a href="#" class="text-sm text-blue-400 hover:text-blue-300">Forgot password?</a>
+            </div>
+            
+            <button type="submit" class="login-btn">
+                <div class="loading-spinner"></div>
+                <span class="btn-text">Sign In</span>
+            </button>
+        </form>
+
+        <!-- Sign Up Link -->
+        <div class="text-center mt-6">
+            <p class="text-gray-400">
+                Don't have an account? 
+                <a href="#" class="text-blue-400 hover:text-blue-300 font-semibold">Sign up</a>
+            </p>
+        </div>
+
+        <!-- Terms and Privacy -->
+        <div class="text-center mt-4">
+            <p class="text-xs text-gray-500">
+                By signing in, you agree to our 
+                <a href="#" class="text-blue-400 hover:text-blue-300">Terms of Service</a> and 
+                <a href="#" class="text-blue-400 hover:text-blue-300">Privacy Policy</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        class LoginSystem {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.initEventListeners();
+                this.initGoogleSDK();
+                this.initFacebookSDK();
+            }
+
+            initEventListeners() {
+                // Form submission
+                document.getElementById('login-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleEmailLogin();
+                });
+
+                // Social login buttons
+                document.getElementById('google-login').addEventListener('click', () => {
+                    this.handleGoogleLogin();
+                });
+
+                document.getElementById('facebook-login').addEventListener('click', () => {
+                    this.handleFacebookLogin();
+                });
+            }
+
+            initGoogleSDK() {
+                // Load Google SDK
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            }
+
+            initFacebookSDK() {
+                // Initialize Facebook SDK
+                window.fbAsyncInit = function() {
+                    FB.init({
+                        appId: 'YOUR_FACEBOOK_APP_ID', // Replace with actual app ID
+                        cookie: true,
+                        xfbml: true,
+                        version: 'v18.0'
+                    });
+                };
+
+                const script = document.createElement('script');
+                script.src = 'https://connect.facebook.net/en_US/sdk.js';
+                script.async = true;
+                script.crossOrigin = 'anonymous';
+                document.head.appendChild(script);
+            }
+
+            async handleEmailLogin() {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                if (!email || !password) {
+                    this.showError('Please fill in all fields');
+                    return;
+                }
+
+                if (!this.isValidEmail(email)) {
+                    this.showError('Please enter a valid email address');
+                    return;
+                }
+
+                this.setLoading(true);
+
+                try {
+                    // Simulate API call
+                    await this.simulateLogin(email, password);
+                    
+                    this.showSuccess('Login successful! Redirecting...');
+                    
+                    // Redirect to dashboard after delay
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                    
+                } catch (error) {
+                    this.showError('Invalid email or password');
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+
+            async handleGoogleLogin() {
+                try {
+                    // Initialize Google OAuth 2.0
+                    if (typeof google !== 'undefined') {
+                        google.accounts.id.initialize({
+                            client_id: 'YOUR_GOOGLE_CLIENT_ID', // Replace with actual client ID
+                            callback: this.handleGoogleResponse.bind(this)
+                        });
+
+                        google.accounts.id.prompt();
+                    } else {
+                        // Fallback for demo
+                        this.showSuccess('Google login initiated...');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1500);
+                    }
+                } catch (error) {
+                    console.error('Google login error:', error);
+                    this.showError('Google login failed');
+                }
+            }
+
+            async handleFacebookLogin() {
+                try {
+                    if (typeof FB !== 'undefined') {
+                        FB.login((response) => {
+                            if (response.authResponse) {
+                                this.handleFacebookResponse(response);
+                            } else {
+                                this.showError('Facebook login cancelled');
+                            }
+                        }, {scope: 'email,public_profile'});
+                    } else {
+                        // Fallback for demo
+                        this.showSuccess('Facebook login initiated...');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1500);
+                    }
+                } catch (error) {
+                    console.error('Facebook login error:', error);
+                    this.showError('Facebook login failed');
+                }
+            }
+
+            handleGoogleResponse(response) {
+                // Handle Google login response
+                console.log('Google login response:', response);
+                
+                if (response.credential) {
+                    // Verify the JWT token and login
+                    this.showSuccess('Google login successful!');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    this.showError('Google login failed');
+                }
+            }
+
+            handleFacebookResponse(response) {
+                // Handle Facebook login response
+                console.log('Facebook login response:', response);
+                
+                if (response.authResponse) {
+                    // Get user info and login
+                    FB.api('/me', {fields: 'name,email'}, (userInfo) => {
+                        console.log('Facebook user info:', userInfo);
+                        this.showSuccess('Facebook login successful!');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1500);
+                    });
+                } else {
+                    this.showError('Facebook login failed');
+                }
+            }
+
+            async simulateLogin(email, password) {
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Demo validation (replace with actual API call)
+                if (email === 'demo@formgpt.com' && password === 'demo123') {
+                    return { success: true, user: { email, name: 'Demo User' } };
+                } else {
+                    throw new Error('Invalid credentials');
+                }
+            }
+
+            isValidEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+
+            setLoading(loading) {
+                const loginBtn = document.querySelector('.login-btn');
+                const spinner = loginBtn.querySelector('.loading-spinner');
+                const btnText = loginBtn.querySelector('.btn-text');
+                
+                if (loading) {
+                    loginBtn.disabled = true;
+                    spinner.style.display = 'block';
+                    btnText.textContent = 'Signing In...';
+                } else {
+                    loginBtn.disabled = false;
+                    spinner.style.display = 'none';
+                    btnText.textContent = 'Sign In';
+                }
+            }
+
+            showError(message) {
+                const errorDiv = document.getElementById('error-message');
+                const successDiv = document.getElementById('success-message');
+                
+                successDiv.style.display = 'none';
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                
+                // Auto hide after 5 seconds
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            }
+
+            showSuccess(message) {
+                const successDiv = document.getElementById('success-message');
+                const errorDiv = document.getElementById('error-message');
+                
+                errorDiv.style.display = 'none';
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                
+                // Auto hide after 5 seconds
+                setTimeout(() => {
+                    successDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Initialize login system
+        document.addEventListener('DOMContentLoaded', () => {
+            new LoginSystem();
+            
+            // Add some animation to the login container
+            anime({
+                targets: '.login-container',
+                scale: [0.9, 1],
+                opacity: [0, 1],
+                duration: 800,
+                easing: 'easeOutQuart'
+            });
+        });
+    </script>
+    <script src="main.js"></script>
+</body>
+</html>

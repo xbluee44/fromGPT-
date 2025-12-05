@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Website Builder - FormGPT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link href="https://unpkg.com/splitting@1.0.6/dist/splitting.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #1a1a1a;
+            --secondary-bg: #f8f9fa;
+            --accent-blue: #0066ff;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --error-red: #ef4444;
+            --neutral-gray: #6b7280;
+            --text-light: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-light);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #0066ff, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .template-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .template-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 102, 255, 0.2);
+        }
+        
+        .template-card.selected {
+            border-color: var(--accent-blue);
+            background: rgba(0, 102, 255, 0.1);
+        }
+        
+        .prompt-input {
+            background: rgba(26, 26, 26, 0.95);
+            border: 2px solid rgba(0, 102, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .prompt-input:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #0066ff, #0052cc);
+            transition: all 0.3s ease;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 102, 255, 0.3);
+        }
+        
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .preview-frame {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            min-height: 400px;
+        }
+        
+        .code-editor {
+            background: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .code-tab {
+            background: rgba(0, 102, 255, 0.1);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .code-tab.active {
+            border-bottom-color: var(--accent-blue);
+            background: rgba(0, 102, 255, 0.2);
+        }
+        
+        .generation-step {
+            opacity: 0.5;
+            transition: all 0.5s ease;
+        }
+        
+        .generation-step.active {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        
+        .generation-step.completed {
+            opacity: 0.8;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .floating-element {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-effect">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <img src="resources/formgpt-logo.png" alt="FormGPT" class="w-10 h-10">
+                    <h1 class="text-2xl font-bold font-space-grotesk gradient-text">FormGPT</h1>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-white hover:text-blue-400 transition-colors">Dashboard</a>
+                    <a href="downloader.html" class="text-white hover:text-blue-400 transition-colors">Downloader</a>
+                    <a href="builder.html" class="text-blue-400 font-semibold">AI Builder</a>
+                    <a href="login.html" class="text-white hover:text-blue-400 transition-colors">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-24 pb-12 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
+        <div class="floating-elements" id="floating-elements"></div>
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl lg:text-6xl font-bold font-space-grotesk mb-6">
+                    <span class="gradient-text">AI Website Builder</span>
+                </h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    Transform your ideas into fully functional websites with the power of AI. 
+                    Just describe what you want, and watch your vision come to life.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Builder Interface -->
+    <section class="py-16 bg-gray-900">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Input Panel -->
+                <div class="lg:col-span-1">
+                    <div class="bg-gray-800 rounded-2xl p-6 sticky top-24">
+                        <h3 class="text-xl font-semibold mb-6">Website Configuration</h3>
+                        
+                        <!-- Template Selection -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium mb-3">Choose Template</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="template-card bg-gray-700 rounded-lg p-3 border-2 border-transparent" data-template="business">
+                                    <div class="w-full h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded mb-2"></div>
+                                    <h4 class="text-xs font-semibold">Business</h4>
+                                </div>
+                                <div class="template-card bg-gray-700 rounded-lg p-3 border-2 border-transparent" data-template="portfolio">
+                                    <div class="w-full h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded mb-2"></div>
+                                    <h4 class="text-xs font-semibold">Portfolio</h4>
+                                </div>
+                                <div class="template-card bg-gray-700 rounded-lg p-3 border-2 border-transparent" data-template="ecommerce">
+                                    <div class="w-full h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded mb-2"></div>
+                                    <h4 class="text-xs font-semibold">E-commerce</h4>
+                                </div>
+                                <div class="template-card bg-gray-700 rounded-lg p-3 border-2 border-transparent" data-template="blog">
+                                    <div class="w-full h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded mb-2"></div>
+                                    <h4 class="text-xs font-semibold">Blog</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Website Prompt -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium mb-3">Describe Your Website</label>
+                            <textarea 
+                                id="website-prompt" 
+                                placeholder="Example: Create a modern restaurant website with menu, reservation system, and photo gallery. Use warm colors and elegant typography..."
+                                class="prompt-input w-full px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none resize-none"
+                                rows="6"
+                            ></textarea>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium mb-3">Options</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="responsive-check" checked class="mr-2 text-blue-600">
+                                    <span class="text-sm">Mobile Responsive</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="seo-check" checked class="mr-2 text-blue-600">
+                                    <span class="text-sm">SEO Optimized</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="analytics-check" class="mr-2 text-blue-600">
+                                    <span class="text-sm">Analytics Integration</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <button 
+                            id="generate-btn" 
+                            class="generate-btn w-full py-4 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled
+                        >
+                            <span class="flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                <span>Generate Website</span>
+                            </span>
+                        </button>
+
+                        <!-- Generation Steps -->
+                        <div id="generation-steps" class="mt-6 space-y-3 hidden">
+                            <div class="generation-step flex items-center space-x-3 p-2 rounded-lg">
+                                <div class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                                    <span class="text-xs font-bold">1</span>
+                                </div>
+                                <span class="text-sm">Analyzing requirements...</span>
+                            </div>
+                            <div class="generation-step flex items-center space-x-3 p-2 rounded-lg">
+                                <div class="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
+                                    <span class="text-xs font-bold">2</span>
+                                </div>
+                                <span class="text-sm">Designing layout...</span>
+                            </div>
+                            <div class="generation-step flex items-center space-x-3 p-2 rounded-lg">
+                                <div class="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
+                                    <span class="text-xs font-bold">3</span>
+                                </div>
+                                <span class="text-sm">Generating content...</span>
+                            </div>
+                            <div class="generation-step flex items-center space-x-3 p-2 rounded-lg">
+                                <div class="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
+                                    <span class="text-xs font-bold">4</span>
+                                </div>
+                                <span class="text-sm">Building final code...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview and Code Panel -->
+                <div class="lg:col-span-2">
+                    <div class="bg-gray-800 rounded-2xl p-6">
+                        <!-- Tabs -->
+                        <div class="flex space-x-4 mb-6">
+                            <button class="code-tab active px-4 py-2 rounded-lg font-medium" data-tab="preview">
+                                Preview
+                            </button>
+                            <button class="code-tab px-4 py-2 rounded-lg font-medium" data-tab="html">
+                                HTML
+                            </button>
+                            <button class="code-tab px-4 py-2 rounded-lg font-medium" data-tab="css">
+                                CSS
+                            </button>
+                            <button class="code-tab px-4 py-2 rounded-lg font-medium" data-tab="js">
+                                JavaScript
+                            </button>
+                        </div>
+
+                        <!-- Preview Tab -->
+                        <div id="preview-tab" class="tab-content">
+                            <div class="preview-frame border border-gray-700">
+                                <div id="website-preview" class="p-8 text-center text-gray-500">
+                                    <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    <p class="text-lg mb-2">Website Preview</p>
+                                    <p class="text-sm">Your generated website will appear here</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Code Tabs -->
+                        <div id="html-tab" class="tab-content hidden">
+                            <div class="code-editor">
+                                <div class="bg-gray-900 px-4 py-2 border-b border-gray-700">
+                                    <span class="text-sm text-gray-400">index.html</span>
+                                </div>
+                                <textarea 
+                                    id="html-code" 
+                                    readonly 
+                                    class="w-full h-96 p-4 bg-gray-900 text-gray-300 font-mono text-sm resize-none focus:outline-none"
+                                    placeholder="HTML code will appear here..."
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <div id="css-tab" class="tab-content hidden">
+                            <div class="code-editor">
+                                <div class="bg-gray-900 px-4 py-2 border-b border-gray-700">
+                                    <span class="text-sm text-gray-400">styles.css</span>
+                                </div>
+                                <textarea 
+                                    id="css-code" 
+                                    readonly 
+                                    class="w-full h-96 p-4 bg-gray-900 text-gray-300 font-mono text-sm resize-none focus:outline-none"
+                                    placeholder="CSS code will appear here..."
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <div id="js-tab" class="tab-content hidden">
+                            <div class="code-editor">
+                                <div class="bg-gray-900 px-4 py-2 border-b border-gray-700">
+                                    <span class="text-sm text-gray-400">script.js</span>
+                                </div>
+                                <textarea 
+                                    id="js-code" 
+                                    readonly 
+                                    class="w-full h-96 p-4 bg-gray-900 text-gray-300 font-mono text-sm resize-none focus:outline-none"
+                                    placeholder="JavaScript code will appear here..."
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-4 mt-6">
+                            <button 
+                                id="download-btn" 
+                                class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled
+                            >
+                                Download Files
+                            </button>
+                            <button 
+                                id="deploy-btn" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled
+                            >
+                                Deploy Website
+                            </button>
+                            <button 
+                                id="preview-btn" 
+                                class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled
+                            >
+                                Live Preview
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Templates Showcase -->
+    <section class="py-20 bg-gray-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold font-space-grotesk mb-6">Template Gallery</h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    Choose from our collection of professionally designed templates
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="template-card bg-gray-900 rounded-xl overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600"></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Business Pro</h3>
+                        <p class="text-gray-400 text-sm mb-4">Professional business landing page with modern design</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-blue-400">Business</span>
+                            <button class="text-sm text-gray-400 hover:text-white">Preview</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="template-card bg-gray-900 rounded-xl overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-green-500 to-teal-600"></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Creative Portfolio</h3>
+                        <p class="text-gray-400 text-sm mb-4">Showcase your work with this elegant portfolio template</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-green-400">Portfolio</span>
+                            <button class="text-sm text-gray-400 hover:text-white">Preview</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="template-card bg-gray-900 rounded-xl overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-red-500 to-pink-600"></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Online Store</h3>
+                        <p class="text-gray-400 text-sm mb-4">Complete e-commerce solution with shopping cart</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-red-400">E-commerce</span>
+                            <button class="text-sm text-gray-400 hover:text-white">Preview</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="template-card bg-gray-900 rounded-xl overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-yellow-500 to-orange-600"></div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Blog Magazine</h3>
+                        <p class="text-gray-400 text-sm mb-4">Clean and modern blog layout with rich content</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-yellow-400">Blog</span>
+                            <button class="text-sm text-gray-400 hover:text-white">Preview</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black py-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-4 mb-4">
+                    <img src="resources/formgpt-logo.png" alt="FormGPT" class="w-8 h-8">
+                    <h3 class="text-2xl font-bold font-space-grotesk gradient-text">FormGPT</h3>
+                </div>
+                <p class="text-gray-400 mb-4">Powered by Advanced AI • 2025</p>
+                <p class="text-sm text-gray-500">© 2025 FormGPT. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // AI Website Builder functionality
+        class WebsiteBuilder {
+            constructor() {
+                this.selectedTemplate = null;
+                this.generatedWebsite = null;
+                this.init();
+            }
+
+            init() {
+                this.initFloatingElements();
+                this.initEventListeners();
+            }
+
+            initFloatingElements() {
+                const container = document.getElementById('floating-elements');
+                const elements = ['<', '>', '{', '}', '[', ']', '(', ')', '/', '*', '&', '#'];
+                
+                for (let i = 0; i < 20; i++) {
+                    const element = document.createElement('div');
+                    element.className = 'floating-element text-2xl text-blue-400';
+                    element.textContent = elements[Math.floor(Math.random() * elements.length)];
+                    element.style.left = Math.random() * 100 + '%';
+                    element.style.top = Math.random() * 100 + '%';
+                    element.style.animationDelay = Math.random() * 6 + 's';
+                    container.appendChild(element);
+                }
+            }
+
+            initEventListeners() {
+                // Template selection
+                document.querySelectorAll('.template-card').forEach(card => {
+                    card.addEventListener('click', () => this.selectTemplate(card.dataset.template));
+                });
+
+                // Prompt input
+                const promptInput = document.getElementById('website-prompt');
+                const generateBtn = document.getElementById('generate-btn');
+                
+                promptInput.addEventListener('input', () => this.validateInput());
+                generateBtn.addEventListener('click', () => this.generateWebsite());
+
+                // Code tabs
+                document.querySelectorAll('.code-tab').forEach(tab => {
+                    tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+                });
+
+                // Action buttons
+                document.getElementById('download-btn').addEventListener('click', () => this.downloadFiles());
+                document.getElementById('deploy-btn').addEventListener('click', () => this.deployWebsite());
+                document.getElementById('preview-btn').addEventListener('click', () => this.openPreview());
+            }
+
+            selectTemplate(template) {
+                this.selectedTemplate = template;
+                
+                // Update UI
+                document.querySelectorAll('.template-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                document.querySelector(`[data-template="${template}"]`).classList.add('selected');
+                
+                this.validateInput();
+            }
+
+            validateInput() {
+                const promptInput = document.getElementById('website-prompt');
+                const generateBtn = document.getElementById('generate-btn');
+                
+                const hasPrompt = promptInput.value.trim().length > 10;
+                generateBtn.disabled = !hasPrompt;
+            }
+
+            async generateWebsite() {
+                const prompt = document.getElementById('website-prompt').value.trim();
+                const generateBtn = document.getElementById('generate-btn');
+                const stepsContainer = document.getElementById('generation-steps');
+                
+                // Disable button and show steps
+                generateBtn.disabled = true;
+                stepsContainer.classList.remove('hidden');
+                
+                // Reset steps
+                document.querySelectorAll('.generation-step').forEach((step, index) => {
+                    step.classList.remove('active', 'completed');
+                    if (index === 0) step.classList.add('active');
+                });
+
+                try {
+                    // Step 1: Analyzing requirements
+                    await this.animateStep(0);
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+
+                    // Step 2: Designing layout
+                    await this.animateStep(1);
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    // Step 3: Generating content
+                    await this.animateStep(2);
+                    await new Promise(resolve => setTimeout(resolve, 2500));
+
+                    // Step 4: Building final code
+                    await this.animateStep(3);
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    // Generate the website
+                    this.generatedWebsite = this.createWebsite(prompt, this.selectedTemplate);
+                    
+                    // Update UI with generated content
+                    this.updatePreview();
+                    this.updateCode();
+                    this.enableActions();
+                    
+                    // Hide steps
+                    stepsContainer.classList.add('hidden');
+                    
+                    // Show success notification
+                    if (window.formGPT) {
+                        window.formGPT.showNotification('Website generated successfully!', 'success');
+                    }
+
+                } catch (error) {
+                    console.error('Generation error:', error);
+                    if (window.formGPT) {
+                        window.formGPT.showNotification('Website generation failed', 'error');
+                    }
+                } finally {
+                    generateBtn.disabled = false;
+                }
+            }
+
+            async animateStep(stepIndex) {
+                const steps = document.querySelectorAll('.generation-step');
+                
+                // Mark current step as completed
+                if (stepIndex > 0) {
+                    steps[stepIndex - 1].classList.remove('active');
+                    steps[stepIndex - 1].classList.add('completed');
+                }
+                
+                // Activate current step
+                steps[stepIndex].classList.add('active');
+                
+                // Update step text to show progress
+                const stepTexts = [
+                    'Analyzing requirements...',
+                    'Designing layout...',
+                    'Generating content...',
+                    'Building final code...'
+                ];
+                
+                steps[stepIndex].querySelector('span').textContent = stepTexts[stepIndex];
+            }
+
+            createWebsite(prompt, template) {
+                const website = {
+                    id: Date.now(),
+                    prompt: prompt,
+                    template: template,
+                    timestamp: new Date().toISOString(),
+                    pages: [
+                        {
+                            name: 'index',
+                            title: 'Home',
+                            content: this.generateHTML(prompt, template),
+                            css: this.generateCSS(template),
+                            js: this.generateJS(template)
+                        }
+                    ]
+                };
+
+                return website;
+            }
+
+            generateHTML(prompt, template) {
+                const templates = {
+                    business: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Business - AI Generated</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <h1>Your Business</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h2 class="hero-title">${this.extractTitle(prompt)}</h2>
+                <p class="hero-description">${this.extractDescription(prompt)}</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary">Get Started</button>
+                    <button class="btn btn-secondary">Learn More</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <h3 class="section-title">Our Services</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🚀</div>
+                        <h4>Fast Performance</h4>
+                        <p>High-speed solutions for your business needs</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💡</div>
+                        <h4>Innovation</h4>
+                        <p>Cutting-edge technology and creative solutions</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h4>Results Driven</h4>
+                        <p>Focused on delivering measurable outcomes</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <div class="container">
+                <h3>Ready to Get Started?</h3>
+                <p>Contact us today to discuss your project</p>
+                <button class="btn btn-primary">Contact Now</button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 AI Generated Website. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>`,
+                    portfolio: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creative Portfolio - AI Generated</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <h1>Creative Portfolio</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#work">Work</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h2 class="hero-title">Creative Designer & Developer</h2>
+                <p class="hero-description">Bringing ideas to life through innovative design and cutting-edge technology</p>
+                <button class="btn btn-primary">View My Work</button>
+            </div>
+        </section>
+
+        <section class="portfolio">
+            <div class="container">
+                <h3 class="section-title">Featured Projects</h3>
+                <div class="portfolio-grid">
+                    <div class="portfolio-item">
+                        <div class="portfolio-image">
+                            <div class="placeholder-image">Project 1</div>
+                        </div>
+                        <h4>Web Design</h4>
+                        <p>Modern website design for tech startup</p>
+                    </div>
+                    <div class="portfolio-item">
+                        <div class="portfolio-image">
+                            <div class="placeholder-image">Project 2</div>
+                        </div>
+                        <h4>Mobile App</h4>
+                        <p>iOS app with intuitive user interface</p>
+                    </div>
+                    <div class="portfolio-item">
+                        <div class="portfolio-image">
+                            <div class="placeholder-image">Project 3</div>
+                        </div>
+                        <h4>Branding</h4>
+                        <p>Complete brand identity design</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="about">
+            <div class="container">
+                <h3 class="section-title">About Me</h3>
+                <p class="about-text">Passionate creator with 5+ years of experience in design and development. I believe in creating meaningful experiences that solve real problems.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Creative Portfolio. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>`,
+                    ecommerce: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Store - AI Generated</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <h1>Online Store</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#products">Products</a></li>
+                <li><a href="#cart">Cart</a></li>
+                <li><a href="#account">Account</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h2 class="hero-title">Premium Products</h2>
+                <p class="hero-description">Discover our collection of high-quality products</p>
+                <button class="btn btn-primary">Shop Now</button>
+            </div>
+        </section>
+
+        <section class="products">
+            <div class="container">
+                <h3 class="section-title">Featured Products</h3>
+                <div class="products-grid">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <div class="placeholder-image">Product 1</div>
+                        </div>
+                        <h4>Premium Item</h4>
+                        <p class="price">$99.99</p>
+                        <button class="btn btn-primary">Add to Cart</button>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">
+                            <div class="placeholder-image">Product 2</div>
+                        </div>
+                        <h4>Deluxe Package</h4>
+                        <p class="price">$149.99</p>
+                        <button class="btn btn-primary">Add to Cart</button>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">
+                            <div class="placeholder-image">Product 3</div>
+                        </div>
+                        <h4>Essential Kit</h4>
+                        <p class="price">$79.99</p>
+                        <button class="btn btn-primary">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <div class="container">
+                <h3>Special Offer</h3>
+                <p>Get 20% off your first order</p>
+                <button class="btn btn-primary">Claim Discount</button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Online Store. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>`,
+                    blog: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Magazine - AI Generated</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <h1>Blog Magazine</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#articles">Articles</a></li>
+                <li><a href="#categories">Categories</a></li>
+                <li><a href="#about">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h2 class="hero-title">Latest Stories</h2>
+                <p class="hero-description">Insights, trends, and stories from the digital world</p>
+            </div>
+        </section>
+
+        <section class="articles">
+            <div class="container">
+                <div class="articles-grid">
+                    <article class="featured-article">
+                        <div class="article-image">
+                            <div class="placeholder-image">Featured Article</div>
+                        </div>
+                        <div class="article-content">
+                            <h3>The Future of Technology</h3>
+                            <p>Exploring emerging trends and innovations that will shape our digital future...</p>
+                            <div class="article-meta">
+                                <span>By AI Author</span>
+                                <span>5 min read</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <div class="article-list">
+                        <article class="article-item">
+                            <h4>Design Trends 2025</h4>
+                            <p>What's new in the world of design and creativity...</p>
+                            <span class="read-time">3 min read</span>
+                        </article>
+                        <article class="article-item">
+                            <h4>AI in Business</h4>
+                            <p>How artificial intelligence is transforming industries...</p>
+                            <span class="read-time">7 min read</span>
+                        </article>
+                        <article class="article-item">
+                            <h4>Startup Success</h4>
+                            <p>Key strategies for building a successful startup...</p>
+                            <span class="read-time">6 min read</span>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="newsletter">
+            <div class="container">
+                <h3>Stay Updated</h3>
+                <p>Subscribe to our newsletter for the latest articles</p>
+                <div class="newsletter-form">
+                    <input type="email" placeholder="Enter your email">
+                    <button class="btn btn-primary">Subscribe</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Blog Magazine. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>`
+                };
+
+                return templates[template] || templates.business;
+            }
+
+            generateCSS(template) {
+                const baseCSS = `
+/* AI Generated Website Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.header {
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+}
+
+.nav-brand h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0066ff;
+}
+
+.nav-menu {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+}
+
+.nav-menu a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.nav-menu a:hover {
+    color: #0066ff;
+}
+
+.hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.hero-description {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #0066ff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0052cc;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+}
+
+.btn-secondary:hover {
+    background: white;
+    color: #667eea;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.footer {
+    background: #1a1a1a;
+    color: white;
+    text-align: center;
+    padding: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .nav {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav-menu {
+        gap: 1rem;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+}`;
+
+                const templateCSS = {
+                    business: `
+.features {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.feature-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.feature-card h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.feature-card p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.cta {
+    padding: 4rem 0;
+    background: #0066ff;
+    color: white;
+    text-align: center;
+}
+
+.cta h3 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.cta p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}`,
+                    portfolio: `
+.portfolio {
+    padding: 4rem 0;
+}
+
+.portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.portfolio-item {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.portfolio-item:hover {
+    transform: translateY(-5px);
+}
+
+.portfolio-image {
+    height: 200px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.placeholder-image {
+    color: white;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.portfolio-item h4 {
+    padding: 1rem 1.5rem 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.portfolio-item p {
+    padding: 0 1.5rem 1.5rem;
+    color: #666;
+}
+
+.about {
+    padding: 4rem 0;
+    background: #f8f9fa;
+}
+
+.about-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #555;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}`,
+                    ecommerce: `
+.products {
+    padding: 4rem 0;
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.product-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+.product-image {
+    height: 200px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-card h4 {
+    padding: 1rem 1.5rem 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.price {
+    padding: 0 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ff6b6b;
+    margin-bottom: 1rem;
+}
+
+.product-card .btn {
+    margin: 0 1.5rem 1.5rem;
+    width: calc(100% - 3rem);
+}
+
+.cta {
+    padding: 4rem 0;
+    background: #ff6b6b;
+    color: white;
+    text-align: center;
+}`,
+                    blog: `
+.articles {
+    padding: 4rem 0;
+}
+
+.articles-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    margin-top: 3rem;
+}
+
+.featured-article {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.article-image {
+    height: 250px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.article-content {
+    padding: 2rem;
+}
+
+.article-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.article-content p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.article-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.article-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.article-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.article-item h4 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.article-item p {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.read-time {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.newsletter {
+    padding: 4rem 0;
+    background: #f8f9fa;
+    text-align: center;
+}
+
+.newsletter-form {
+    display: flex;
+    gap: 1rem;
+    max-width: 500px;
+    margin: 2rem auto 0;
+}
+
+.newsletter-form input {
+    flex: 1;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .articles-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .newsletter-form {
+        flex-direction: column;
+    }
+}`
+                };
+
+                return baseCSS + (templateCSS[template] || templateCSS.business);
+            }
+
+            generateJS(template) {
+                return `// AI Generated JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('AI Generated Website Loaded Successfully');
+    
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Add animation on scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    // Observe elements for animation
+    document.querySelectorAll('.feature-card, .portfolio-item, .product-card').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(el);
+    });
+
+    // Button interactions
+    document.querySelectorAll('.btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            // Add ripple effect
+            const ripple = document.createElement('span');
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+            
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            ripple.classList.add('ripple');
+            
+            this.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        });
+    });
+
+    // Mobile menu toggle (if needed)
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navMenu = document.querySelector('.nav-menu');
+    
+    if (mobileMenuBtn && navMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+    }
+});
+
+// Add CSS for ripple effect
+const style = document.createElement('style');
+style.textContent = \`
+.btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: ripple-animation 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes ripple-animation {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+\`;
+document.head.appendChild(style);`;
+            }
+
+            extractTitle(prompt) {
+                // Simple title extraction from prompt
+                const sentences = prompt.split(/[.!?]+/);
+                return sentences[0].substring(0, 50) + '...' || 'Welcome to Your Website';
+            }
+
+            extractDescription(prompt) {
+                // Simple description extraction
+                const sentences = prompt.split(/[.!?]+/);
+                return sentences[1] || sentences[0] || 'Your website description goes here.';
+            }
+
+            updatePreview() {
+                if (!this.generatedWebsite) return;
+                
+                const preview = document.getElementById('website-preview');
+                const page = this.generatedWebsite.pages[0];
+                
+                // Create iframe for preview
+                const iframe = document.createElement('iframe');
+                iframe.style.width = '100%';
+                iframe.style.height = '600px';
+                iframe.style.border = 'none';
+                iframe.style.borderRadius = '8px';
+                
+                const htmlContent = page.content;
+                iframe.srcdoc = htmlContent;
+                
+                preview.innerHTML = '';
+                preview.appendChild(iframe);
+            }
+
+            updateCode() {
+                if (!this.generatedWebsite) return;
+                
+                const page = this.generatedWebsite.pages[0];
+                
+                document.getElementById('html-code').value = page.content;
+                document.getElementById('css-code').value = page.css;
+                document.getElementById('js-code').value = page.js;
+            }
+
+            switchTab(tabName) {
+                // Update tab buttons
+                document.querySelectorAll('.code-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                
+                // Update tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            }
+
+            enableActions() {
+                document.getElementById('download-btn').disabled = false;
+                document.getElementById('deploy-btn').disabled = false;
+                document.getElementById('preview-btn').disabled = false;
+            }
+
+            downloadFiles() {
+                if (!this.generatedWebsite) return;
+                
+                const page = this.generatedWebsite.pages[0];
+                
+                // Create a zip file with all the code
+                const files = [
+                    { name: 'index.html', content: page.content },
+                    { name: 'styles.css', content: page.css },
+                    { name: 'script.js', content: page.js }
+                ];
+                
+                // Simulate download
+                files.forEach(file => {
+                    const blob = new Blob([file.content], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.name;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+                
+                if (window.formGPT) {
+                    window.formGPT.showNotification('Files downloaded successfully!', 'success');
+                }
+            }
+
+            deployWebsite() {
+                if (window.formGPT) {
+                    window.formGPT.showNotification('Website deployment feature coming soon!', 'info');
+                }
+            }
+
+            openPreview() {
+                if (!this.generatedWebsite) return;
+                
+                const page = this.generatedWebsite.pages[0];
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(page.content);
+            }
+        }
+
+        // Initialize builder
+        const builder = new WebsiteBuilder();
+    </script>
+    <script src="main.js"></script>
+</body>
+</html>
